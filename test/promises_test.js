@@ -17,6 +17,12 @@ describe('MyPromise', function() {
   })
 
   it('queues up waiting functions in its .then method, and invokes invokes them when its resolution function has been called', function(testFinished) {
+    new MyPromise((resolve, reject) => resolve("a"))
+          .then(a => assert.equal(a, "a"))
+          .then(_ => testFinished())
+  })
+
+  it('passes the result of one waiting function as the value for the next waiting function', function(testFinished) {
     var seen = []
     new MyPromise((resolve, reject) => resolve("a"))
           .then(a => seen.push(a) && "b")
@@ -24,9 +30,6 @@ describe('MyPromise', function() {
           .then(c => seen.push(c))
           .then(_ => assert.deepEqual(seen, ["a", "b", "c"]))
           .then(_ => testFinished())
-  })
-
-  it.skip('passes the result of one waiting function as the value for the next waiting function', function() {
   })
 
   it.skip('invokes waiting functions in a breadth-first manner', function() {
