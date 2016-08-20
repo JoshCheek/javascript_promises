@@ -32,7 +32,17 @@ describe('MyPromise', function() {
           .then(_ => testFinished())
   })
 
-  it.skip('invokes waiting functions in a breadth-first manner', function() {
+  it('invokes waiting functions in a breadth-first manner', function(testFinished) {
+    var seen = []
+    var promise = new MyPromise(resolve => resolve('a'))
+    promise.then(char => seen.push(char) && 'b1')
+           .then(char => seen.push(char) && 'c1')
+           .then(char => seen.push(char) && 'not relevant')
+    promise.then(char => seen.push(char) && 'b2')
+           .then(char => seen.push(char) && 'c2')
+           .then(char => seen.push(char) && 'not relevant')
+           .then(_ => assert.deepEqual(seen, ['a','a', 'b1','b2', 'c1', 'c2']))
+           .then(_ => testFinished())
   })
 
   describe('when the result is a promise', function() {
