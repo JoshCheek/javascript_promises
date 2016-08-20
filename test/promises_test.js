@@ -340,7 +340,7 @@ describe('MyPromise', function() {
                .then(testFinished)
     })
 
-    it.skip('explodes into the catch block when given no arguments (for whatever fkn reason -.^)', function(testFinished) {
+    it('explodes into the catch block when given no arguments (for whatever fkn reason -.^)', function(testFinished) {
       Promise.all().catch(err => testFinished())
     })
   })

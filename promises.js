@@ -78,20 +78,17 @@ module.exports = (function() {
     }
 
     static all(promises) {
-      var   resolve      = undefined
-      var   reject       = undefined
-      var   promisesLeft = promises.length
-      const results      = []
-      const promiseAll   = new MyPromise((rv, rj) => { resolve = rv, reject = rj })
-      if(promises.length === 0)
-        resolve([])
-      promises.forEach((promise, index) => {
-        MyPromise.resolve(promise)
-                 .catch(reject)
-                 .then(val => results[index] = val)
-                 .then(_   => --promisesLeft || resolve(results))
+      return new MyPromise((resolve, reject) => {
+        var   numLeft = promises.length
+        const results = []
+        promises.forEach((promise, index) => {
+          MyPromise.resolve(promise)
+                   .catch(reject)
+                   .then(val => results[index] = val)
+                   .then(_   => --numLeft || resolve(results))
+        })
+        numLeft || resolve(results)
       })
-      return promiseAll
     }
   }
 
