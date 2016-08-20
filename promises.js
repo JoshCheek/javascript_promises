@@ -86,11 +86,33 @@ MyPromise.reject = function(reason) {
 MyPromise.resolve = function(value) {
   if(value && value.then instanceof Function) {
     return new MyPromise((resolve, reject) => {
-      value.then(resolve)
+      value.then(resolve).catch(reject)
     })
   } else {
     return new MyPromise((resolve, reject) => resolve(value))
   }
+}
+
+MyPromise.all = function(promises) {
+  var results      = []
+  var promisesLeft = promises.length
+  var resolve      = undefined
+  var reject       = undefined
+  var promiseAll   = new MyPromise((_resolve, _reject) => {
+    resolve = _resolve
+    reject  = _reject
+  })
+  promises.forEach((promise, index) => {
+    MyPromise.resolve(promise)
+             .catch(val => reject(val))
+             .then(val => {
+               results[index] = val
+               --promisesLeft
+               if(!promisesLeft)
+                 resolve(results)
+             })
+  })
+  return promiseAll
 }
 
 function executeLater(fn) {

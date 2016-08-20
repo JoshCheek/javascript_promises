@@ -280,33 +280,50 @@ describe('MyPromise', function() {
                .then(val => assert.equal(val, 'hello'))
                .then(testFinished)
     })
+
+    it('resolves errored promises as well', function(testFinished) {
+      var seen = []
+      MyPromise.resolve(
+        new MyPromise((resolve, reject) => reject("err"))
+      ).then(val  => seen.push([1, val]))
+       .catch(err => seen.push([2, err]))
+       .then(_    => assert.deepEqual(seen, [[2, 'err']]))
+       .then(testFinished)
+    })
   })
 
-  describe.skip('.all', function() {
+  // TODO: what happens if you give it an empty array?
+  // TODO: it should still work just fine if you modify the array in the middle of it
+  // TODO: it should work regardless of the order of completion
+  // TODO: what happens if you give it a non-array? (eg arguments or string)
+  describe('.all', function() {
     // examples taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
     it('waits for all fulfillments', function(testFinished) {
       var p1 = MyPromise.resolve(3)
-      var p2 = 1337
+      var p2 = 'three'
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "foo"))
       MyPromise.all([p1, p2, p3])
-             .then(values => assert.deepEqual(values, [3, 1337, "foo"]))
-             .then(testFinished)
+               .then(values => assert.deepEqual(values, [3, 'three', "foo"]))
+               .then(testFinished)
     })
 
     it('abandons waiting upon the first rejection', function(testFinished) {
       var p1 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "one"  ))
-      var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 15, "two"  ))
+      var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 25, "two"  ))
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 20, "three"))
-      var p5 = new MyPromise((resolve, reject) => reject("reject"))
-      var p4 = new MyPromise((resolve, reject) => setTimeout(resolve, 25, "four" ))
+      var p4 = new MyPromise((resolve, reject) => reject("nahhh"))
+      var p5 = new MyPromise((resolve, reject) => setTimeout(resolve, 15, "four" ))
+      p4.hello = "world"
 
       var seen = []
       MyPromise.all([p1, p2, p3, p4, p5])
-               .then(val  => seen.push(seen))
+               .then(val  => seen.push(val))
                .catch(err => seen.push(err))
-               .then(_    => assert.deepEqual(seen, ['reject']))
+               .then(_    => assert.deepEqual(seen, ['nahhh']))
                .then(testFinished)
     })
 
   })
 })
+
+// TODO: Multiple catches
