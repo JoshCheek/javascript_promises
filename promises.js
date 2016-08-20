@@ -17,22 +17,23 @@ function MyPromise(fn) {
     invokeCallbacks()
   }
 
-  function thenHelper(fn, resolve, reject) {
-    if (state === 'error')   return reject(result)
-    if (state !== 'settled') return
+  function resolveOrReject(fn, resolve, reject) {
     try { var nextResult = fn(result)
           if(thenable(nextResult)) nextResult.then(resolve)
           else resolve(nextResult)
     } catch(err) { reject(err) }
   }
 
+  function thenHelper(fn, resolve, reject) {
+    if (state === 'error')   return reject(result)
+    if (state !== 'settled') return
+    resolveOrReject(fn, resolve, reject)
+  }
+
   function catchHelper(fn, resolve, reject) {
     if (state === 'settled') return resolve(result)
     if (state !== 'error')   return
-    try { var nextResult = fn(result)
-          if(thenable(nextResult)) nextResult.then(resolve)
-          else resolve(nextResult)
-    } catch(err) { reject(err) }
+    resolveOrReject(fn, resolve, reject)
   }
 
   this.then = function(fn) {
