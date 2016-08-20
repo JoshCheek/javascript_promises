@@ -79,6 +79,10 @@ function MyPromise(fn) {
   finally { /* something probably goes here .done, maybe? */ }
 }
 
+MyPromise.reject = function(reason) {
+  return new MyPromise((resolve, reject) => reject(reason))
+}
+
 function executeLater(fn) {
   setTimeout(fn, 0)
 }

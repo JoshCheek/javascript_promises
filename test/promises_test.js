@@ -240,4 +240,58 @@ describe('MyPromise', function() {
           ]))
           .then(testFinished)
   })
+
+  // TODO: Apparently you can pass 2 args to .then (maybe also to .catch?)
+
+  describe('.length', function() {
+    it('is always 1 (number of constructor arguments)', function() {
+      assert.equal(MyPromise.length, 1)
+    })
+  })
+
+  describe('.reject', function() {
+    it('returns a Promise object that is rejected with the given reason', function(testFinished) {
+      var seen = []
+      MyPromise.reject("because reasons")
+               .then(reason  => seen.push([1, reason]))
+               .catch(reason => seen.push([2, reason]))
+      MyPromise.reject(new Error("o.O"))
+               .then(err     => seen.push([3, err.message]))
+               .catch(err    => seen.push([4, err.message]))
+               .then(_       => assert.deepEqual(seen, [[2, "because reasons"], [4, 'o.O']]))
+               .then(testFinished)
+
+    })
+  })
+
+  describe('.resolve', function() {
+  })
+
+  describe.skip('.all', function() {
+    // examples taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+    it('waits for all fulfillments', function(testFinished) {
+      var p1 = MyPromise.resolve(3)
+      var p2 = 1337
+      var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "foo"))
+      MyPromise.all([p1, p2, p3])
+             .then(values => assert.deepEqual(values, [3, 1337, "foo"]))
+             .then(testFinished)
+    })
+
+    it('abandons waiting upon the first rejection', function(testFinished) {
+      var p1 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "one"  ))
+      var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 15, "two"  ))
+      var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 20, "three"))
+      var p5 = new MyPromise((resolve, reject) => reject("reject"))
+      var p4 = new MyPromise((resolve, reject) => setTimeout(resolve, 25, "four" ))
+
+      var seen = []
+      MyPromise.all([p1, p2, p3, p4, p5])
+               .then(val  => seen.push(seen))
+               .catch(err => seen.push(err))
+               .then(_    => assert.deepEqual(seen, ['reject']))
+               .then(testFinished)
+    })
+
+  })
 })
