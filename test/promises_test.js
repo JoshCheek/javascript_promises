@@ -137,10 +137,9 @@ describe('MyPromise', function() {
           .then(testFinished)
   })
 
-  specify.skip('.then, declared from within a .then will be appended to the event queue', function(testFinished) {
+  specify('.then, declared from within a .then will be appended to the event queue', function(testFinished) {
     var seen = []
     var promise = new MyPromise((result, reject) => result('a'))
-    console.log(promise)
     promise.then(val => {
              seen.push([1, val])
              promise.then(val => {
@@ -151,7 +150,6 @@ describe('MyPromise', function() {
              return 'b'
            })
            .then(val => seen.push([4, val]))
-           .then(_   => console.log(seen))
            .then(_   => assert.deepEqual(seen, [
              [1, 'a'], [2, 'a'], [3, 'a'], [4, 'b'], [5, 'a']
            ]))

@@ -19,28 +19,32 @@ function MyPromise(fn) {
 
   this.then = function(fn) {
     return new MyPromise((resolve, reject) => {
-      callbacks.push(() => {
-        if (state === 'settled') {
-          var nextResult = fn(result)
-          if(nextResult instanceof MyPromise)
-            nextResult.then(val => resolve(val))
-          else
-            resolve(nextResult)
-        }
-        else if (state === 'error')
-          reject(result)
+        executeLater(() => {
+          callbacks.push(() => {
+            if (state === 'settled') {
+              var nextResult = fn(result)
+              if(nextResult instanceof MyPromise)
+                nextResult.then(val => resolve(val))
+              else
+                resolve(nextResult)
+            }
+            else if (state === 'error')
+              reject(result)
+        })
+        if(state !== 'pending') invokeCallbacks()
       })
-      if(state !== 'pending') invokeCallbacks()
     })
   }
 
   this.catch = function(fn) {
     return new MyPromise((resolve, reject) => {
-      callbacks.push(() => {
-        if      ( state === 'settled' ) resolve(result)
-        else if ( state === 'error'   ) resolve(fn(result))
+      executeLater(() => {
+        callbacks.push(() => {
+          if      ( state === 'settled' ) resolve(result)
+          else if ( state === 'error'   ) resolve(fn(result))
+        })
+        if(state !== 'pending') invokeCallbacks()
       })
-      if(state !== 'pending') invokeCallbacks()
     })
   }
 
