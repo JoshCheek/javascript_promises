@@ -99,8 +99,22 @@ describe('MyPromise', function() {
     })
   })
 
-  // TODO: Figure out wtf happens with reject
-  // TODO: throw exceptions (before and after .then cinvocations)
+  specify('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
+    var seen = []
+    var promise = new MyPromise((result, reject) => { reject("errr") })
+    promise.catch(err => { seen.push(err); return 1 })
+           .then(val  => { seen.push(val); return 2 })
+           .then(val  => { seen.push(val); return 3 })
+    promise.then(val  => { seen.push(val); return 4 })
+           .catch(err => { seen.push(err); return 5 })
+           .then(val  => { seen.push(val); return 6 })
+    promise.catch(err => { seen.push(err); return 7 })
+           .then(val  => { seen.push(val); return 8 })
+           .then(val  => { seen.push(val); return 9 })
+           .then(_    => assert.deepEqual(seen, ['errr', 'errr', 1, 'errr', 7, 2, 5, 8]))
+           .then(testFinished)
+  })
+
   // TODO: what if the result is null / undefined?
   // TODO: what if we throw null / undefined?
   // TODO: define a .then from within a .then

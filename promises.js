@@ -49,7 +49,9 @@ function MyPromise(fn) {
   finally { /* something probably goes here .done, maybe? */ }
 }
 
-const executeLater = function(fn) { setTimeout(fn, 0) }
+function executeLater(fn) {
+  setTimeout(fn, 0)
+}
 
 function invokeOnlyOnce(fn) {
   var invoked = false;
