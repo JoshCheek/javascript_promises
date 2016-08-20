@@ -2,7 +2,6 @@
 
 const assert    = require('chai').assert;
 const MyPromise = require('../promises.js')
-console.log(MyPromise)
 
 describe('MyPromise', function() {
   it('is constructed with a function, which it immediately invokes with resolution and rejection callbacks', function() {
@@ -46,8 +45,16 @@ describe('MyPromise', function() {
   })
 
   describe('when the result is a promise', function() {
-    it.skip('passes the promise\'s result as the next value, not the promise itself', function() {
+    it('passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
+      new MyPromise((resolve, reject) => resolve('first'))
+           .then(_ => new MyPromise(resolve => setTimeout(()=>resolve('second'), 0)))
+           .then(result => assert.equal(result, 'second'))
+           .then(_ => testFinished())
     })
+    it('waits to continue successive promises until the current promise')
   })
   // assert.deepEqual(expected, this.rejs.getTable('testOne'))
+  // TODO: put a timeout in the initial function
+  // TODO: call resolve 2x
+  // TODO: Figure out wtf happens with reject
 })
