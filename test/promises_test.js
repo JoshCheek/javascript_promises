@@ -1,7 +1,8 @@
 'use strict'
 
-const assert    = require('chai').assert;
-const MyPromise = require('../promises.js')
+const assert       = require('chai').assert;
+const MyPromise    = require('../promises.js')
+const executeLater = function(fn) { setTimeout(fn, 0) }
 
 describe('MyPromise', function() {
   it('is constructed with a function, which it immediately invokes with resolution and rejection callbacks', function() {
@@ -47,13 +48,11 @@ describe('MyPromise', function() {
   describe('when the result is a promise', function() {
     it('passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
       new MyPromise((resolve, reject) => resolve('first'))
-           .then(_ => new MyPromise(resolve => setTimeout(()=>resolve('second'), 0)))
-           .then(result => assert.equal(result, 'second'))
-           .then(_ => testFinished())
+           .then(first  => new MyPromise(resolve => executeLater(()=>resolve(first+' second'))))
+           .then(result => assert.equal(result, 'first second'))
+           .then(testFinished)
     })
-    it('waits to continue successive promises until the current promise')
   })
-  // assert.deepEqual(expected, this.rejs.getTable('testOne'))
   // TODO: put a timeout in the initial function
   // TODO: call resolve 2x
   // TODO: Figure out wtf happens with reject
