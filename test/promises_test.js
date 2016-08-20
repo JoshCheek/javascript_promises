@@ -73,9 +73,15 @@ describe('MyPromise', function() {
   })
 
   describe('when the result is a promise', function() {
-    it('passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
+    specify('.then passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
       new MyPromise((resolve, reject) => resolve('first'))
            .then(first  => new MyPromise(resolve => executeLater(()=>resolve(first+' second'))))
+           .then(result => assert.equal(result, 'first second'))
+           .then(testFinished)
+    })
+    specify('.catch passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
+      new MyPromise((resolve, reject) => reject('first'))
+           .catch(first => new MyPromise(resolve => executeLater(()=>resolve(first+' second'))))
            .then(result => assert.equal(result, 'first second'))
            .then(testFinished)
     })
@@ -177,5 +183,4 @@ describe('MyPromise', function() {
   })
 
   // TODO: when a .then / .catch block raises ane error
-  // TODO: a promise passed to catch
 })

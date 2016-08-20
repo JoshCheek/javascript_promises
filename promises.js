@@ -40,8 +40,16 @@ function MyPromise(fn) {
     return new MyPromise((resolve, reject) => {
       executeLater(() => {
         callbacks.push(() => {
-          if      ( state === 'settled' ) resolve(result)
-          else if ( state === 'error'   ) resolve(fn(result))
+          if (state === 'settled') {
+            resolve(result)
+          }
+          else if (state === 'error') {
+            var nextResult = fn(result)
+            if(nextResult instanceof MyPromise)
+              nextResult.then(val => resolve(val))
+            else
+              resolve(nextResult)
+          }
         })
         if(state !== 'pending') invokeCallbacks()
       })
