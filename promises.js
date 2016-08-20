@@ -14,22 +14,25 @@ function makeResolver(promise) {
 }
 
 MyPromise.prototype.then = function(fn) {
-  var promise = new MyPromise((resolve, reject) => {
-      var invoke = (val) => {
-        setTimeout(() => {
-          var result = fn(val)
-          if(result && result.constructor === MyPromise)
-            result.then(val => resolve(val))
-          else
-            resolve(result)
-        }, 0)
-    }
+  return new MyPromise((resolve, reject) => {
+    var invoke = invokeThenClause(fn, resolve, reject)
     if(this._resolvedTo !== undefined) // TODO: should we be able to resolve to undefined?
       invoke(this._resolvedTo)
     else
       this._thenClauses.push(invoke)
   })
-  return promise
+}
+
+const executeLater = function(fn) { setTimeout(fn, 0) }
+
+function invokeThenClause(thenClause, resolve, reject) {
+  return (val) => executeLater(() => {
+                    var result = thenClause(val)
+                    if(result && result.constructor === MyPromise)
+                      result.then(val => resolve(val))
+                    else
+                      resolve(result)
+                  })
 }
 
 function invokeOnlyOnce(fn) {
