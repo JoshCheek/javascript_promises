@@ -125,6 +125,16 @@ describe('MyPromise', function() {
       .then(testFinished)
   })
 
+  it('ignores rejections after the first one', function(testFinished) {
+    var seen = []
+    new MyPromise((resolve, reject) => {
+      reject('a')
+      reject('b')
+    }).catch(a => seen.push(a))
+      .then(_ => assert.deepEqual(seen, ['a']))
+      .then(_ => testFinished())
+  })
+
   specify('wen the result is null/undefined, it behaves the same as if it were a value', function(testFinished) {
     var seen = []
     new MyPromise((result, reject) => result(null))
@@ -167,6 +177,5 @@ describe('MyPromise', function() {
   })
 
   // TODO: when a .then / .catch block raises ane error
-  // TODO: invoking reject multiple times
   // TODO: a promise passed to catch
 })

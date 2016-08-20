@@ -52,9 +52,9 @@ function MyPromise(fn) {
     executeLater(() => handle('settled', val))
   })
 
-  const reject = (val) => { // invoke only once?
+  const reject = invokeOnlyOnce(val => {
     executeLater(() => handle('error', val))
-  }
+  })
 
   try { fn(resolve, reject) }
   catch(err) { reject(err) }
