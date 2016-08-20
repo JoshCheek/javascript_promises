@@ -81,6 +81,28 @@ describe('MyPromise', function() {
     })
   })
 
+  describe('when there is an exception in the constructor', function() {
+    it('passes the result to each dependent fn chain, which can rescue the result', function(testFinished) {
+      var seen = []
+      var promise = new MyPromise((result, reject) => { throw("errr") })
+      promise.catch(err => { seen.push(err); return 1 })
+             .then(val  => { seen.push(val); return 2 })
+             .then(val  => { seen.push(val); return 3 })
+      // promise.then(val  => { seen.push(val); return 4 })
+      //        .catch(err => { seen.push(err); return 5 })
+      //        .then(val  => { seen.push(val); return 6 })
+      // promise.catch(err => { seen.push(err); return 7 })
+      //        .then(val  => { seen.push(val); return 8 })
+      //        .then(val  => { seen.push(val); return 9 })
+      //        .then(_    => assert.equal(seen, ['errr', 'errr', 1, 'errr', 7, 2, 5, 8]))
+             .then(_    => assert.deepEqual(seen, ['errr', 1, 2]))
+             .then(testFinished)
+    })
+  })
+
   // TODO: Figure out wtf happens with reject
   // TODO: throw exceptions (before and after .then cinvocations)
+  // TODO: what if the result is null / undefined?
+  // TODO: what if we throw null / undefined?
+  // TODO: define a .then from within a .then
 })
