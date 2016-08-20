@@ -83,6 +83,8 @@ module.exports = (function() {
       var   promisesLeft = promises.length
       const results      = []
       const promiseAll   = new MyPromise((rv, rj) => { resolve = rv, reject = rj })
+      if(promises.length === 0)
+        resolve([])
       promises.forEach((promise, index) => {
         MyPromise.resolve(promise)
                  .catch(reject)

@@ -292,13 +292,12 @@ describe('MyPromise', function() {
     })
   })
 
-  // TODO: what happens if you give it an empty array?
   // TODO: it should still work just fine if you modify the array in the middle of it
   // TODO: it should work regardless of the order of completion
   // TODO: what happens if you give it a non-array? (eg arguments or string)
   describe('.all', function() {
-    // examples taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
     it('waits for all fulfillments', function(testFinished) {
+      // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
       var p1 = MyPromise.resolve(3)
       var p2 = 'three'
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "foo"))
@@ -308,6 +307,7 @@ describe('MyPromise', function() {
     })
 
     it('abandons waiting upon the first rejection', function(testFinished) {
+      // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
       var p1 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "one"  ))
       var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 25, "two"  ))
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 20, "three"))
@@ -323,7 +323,11 @@ describe('MyPromise', function() {
                .then(testFinished)
     })
 
+    it('yields an empty array when no fulfillments were passed', function(testFinished) {
+      MyPromise.all([])
+               .then(vals => assert.deepEqual(vals, []))
+               .then(testFinished)
+    })
+
   })
 })
-
-// TODO: Multiple catches
