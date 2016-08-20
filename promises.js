@@ -15,9 +15,8 @@ module.exports = (function() {
     this[RESULT]    = undefined
     this[CALLBACKS] = []
     this[STATE]     = 'pending'
-    const resolve   = this[RESOLVE].bind(this)
-    const reject    = this[REJECT].bind(this)
-    catchErr(reject, ()=>fn(resolve, reject))
+    try { fn(this[RESOLVE].bind(this), this[REJECT].bind(this)) }
+    catch(err) { this[REJECT](err) }
   }
 
   MyPromise.prototype = {
@@ -46,10 +45,12 @@ module.exports = (function() {
     },
 
     [RESOLVE_OR_REJECT]: function(fn, resolve, reject) {
-      catchErr(reject, () => {
+      try {
         var nextResult = fn(this[RESULT])
         thenable(nextResult) ? nextResult.then(resolve) : resolve(nextResult)
-      })
+      } catch(err) {
+        reject(err)
+      }
     },
 
     [IF_STATE]: function(callbacks) {
@@ -95,10 +96,6 @@ module.exports = (function() {
 
   function thenable(value) {
     return value && value.then instanceof Function
-  }
-
-  function catchErr(catchCb, tryCb) {
-    try { tryCb() } catch(err) { catchCb(err) }
   }
 
   function delayedPromise(fn) {
