@@ -22,11 +22,15 @@ function MyPromise(fn) {
         executeLater(() => {
           callbacks.push(() => {
             if (state === 'settled') {
-              var nextResult = fn(result)
-              if(nextResult instanceof MyPromise)
-                nextResult.then(val => resolve(val))
-              else
-                resolve(nextResult)
+              try {
+                var nextResult = fn(result)
+                if(nextResult instanceof MyPromise)
+                  nextResult.then(val => resolve(val))
+                else
+                  resolve(nextResult)
+              } catch(err) {
+                reject(err)
+              }
             }
             else if (state === 'error')
               reject(result)
@@ -44,11 +48,15 @@ function MyPromise(fn) {
             resolve(result)
           }
           else if (state === 'error') {
-            var nextResult = fn(result)
-            if(nextResult instanceof MyPromise)
-              nextResult.then(val => resolve(val))
-            else
-              resolve(nextResult)
+            try {
+              var nextResult = fn(result)
+              if(nextResult instanceof MyPromise)
+                nextResult.then(val => resolve(val))
+              else
+                resolve(nextResult)
+            } catch(err) {
+              reject(err)
+            }
           }
         })
         if(state !== 'pending') invokeCallbacks()

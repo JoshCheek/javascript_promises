@@ -182,5 +182,22 @@ describe('MyPromise', function() {
            .then(testFinished)
   })
 
-  // TODO: when a .then / .catch block raises ane error
+  describe('when a .then / .catch block throws ane error', function() {
+    it('progresses as if reject had been called', function(testFinished) {
+      var errs = []
+      new MyPromise((result, reject) => result(1))
+            .then(_ => { throw('a') })
+            .then(_ => errs.push("will not execute"))
+            .catch(err => {
+              errs.push(err)
+              throw('b')
+            })
+            .then(_ => errs.push("will not execute"))
+            .catch(err => errs.push(err))
+            .then(_ => assert.deepEqual(errs, ['a', 'b']))
+            .then(testFinished)
+    })
+  })
+
+  // TODO: when both reject and result are called (in whichever order)
 })
