@@ -1,55 +1,70 @@
 module.exports = (function() {
-  // https://curiosity-driven.org/private-properties-in-javascript
+  // variables https://curiosity-driven.org/private-properties-in-javascript
   const RESULT    = Symbol('result')
   const CALLBACKS = Symbol('callbacks')
   const STATE     = Symbol('state')
+
+  // functions
+  const HANDLE            = Symbol('handle')
+  const REJECT            = Symbol('reject')
+  const RESOLVE           = Symbol('resolve')
+  const IF_STATE          = Symbol('ifState')
+  const RESOLVE_OR_REJECT = Symbol('resolveOrReject')
 
   function MyPromise(fn) {
     this[RESULT]    = undefined
     this[CALLBACKS] = []
     this[STATE]     = 'pending'
-    const resolve   = (val) => executeLater(() => handle('settled', val))
-    const reject    = (val) => executeLater(() => handle('error',   val))
-    const invokeCallbacks = () => {
-      this[CALLBACKS].forEach(cb => cb())
-      this[CALLBACKS] = []
-    }
-    const ifState = (callbacks) => {
-      const retry = () => ifState(callbacks)
-      callbacks[this[STATE]] && callbacks[this[STATE]](retry)
-    }
+    const resolve   = this[RESOLVE].bind(this)
+    const reject    = this[REJECT].bind(this)
+    catchErr(reject, ()=>fn(resolve, reject))
+  }
 
-    const handle = (settledState, settledValue) => {
-      ifState({pending: () => {
-        this[STATE]  = settledState
-        this[RESULT] = settledValue
-        invokeCallbacks()
-      }})
-    }
+  MyPromise.prototype = {
+    then: function(fn) {
+      return delayedPromise((resolve, reject) => this[IF_STATE]({
+        pending: (retry) => this[CALLBACKS].push(retry),
+        settled: ()      => this[RESOLVE_OR_REJECT](fn, resolve, reject),
+        error:   ()      => reject(this[RESULT]),
+      }))
+    },
 
-    const resolveOrReject = (fn, resolve, reject) => {
+    catch: function(fn) {
+      return delayedPromise((resolve, reject) => this[IF_STATE]({
+        pending: (retry) => this[CALLBACKS].push(retry),
+        settled: ()      => resolve(this[RESULT]),
+        error:   ()      => this[RESOLVE_OR_REJECT](fn, resolve, reject),
+      }))
+    },
+
+    [RESOLVE]: function(val) {
+      executeLater(() => this[HANDLE]('settled', val))
+    },
+
+    [REJECT]:  function(val) {
+      executeLater(() => this[HANDLE]('error',   val))
+    },
+
+    [RESOLVE_OR_REJECT]: function(fn, resolve, reject) {
       catchErr(reject, () => {
         var nextResult = fn(this[RESULT])
         thenable(nextResult) ? nextResult.then(resolve) : resolve(nextResult)
       })
+    },
+
+    [IF_STATE]: function(callbacks) {
+      const retry = () => this[IF_STATE](callbacks)
+      callbacks[this[STATE]] && callbacks[this[STATE]](retry)
+    },
+
+    [HANDLE]: function(settledState, settledValue) {
+      this[IF_STATE]({pending: () => {
+        this[STATE]     = settledState
+        this[RESULT]    = settledValue
+        this[CALLBACKS].forEach(cb => cb())
+        this[CALLBACKS] = []
+      }})
     }
-
-    const delayedPromise = (fn) =>
-      new MyPromise((resolve, reject) => executeLater(() => fn(resolve, reject)))
-
-    this.then = fn => delayedPromise((resolve, reject) => ifState({
-      pending: (retry) => this[CALLBACKS].push(retry),
-      settled: ()      => resolveOrReject(fn, resolve, reject),
-      error:   ()      => reject(this[RESULT]),
-    }))
-
-    this.catch = fn => delayedPromise((resolve, reject) => ifState({
-      pending: (retry) => this[CALLBACKS].push(retry),
-      settled: ()      => resolve(this[RESULT]),
-      error:   ()      => resolveOrReject(fn, resolve, reject),
-    }))
-
-    catchErr(reject, ()=>fn(resolve, reject))
   }
 
   MyPromise.reject  = reason => new MyPromise((_, reject) => reject(reason))
@@ -72,6 +87,8 @@ module.exports = (function() {
     return promiseAll
   }
 
+  // helpers
+
   function executeLater(fn) {
     setTimeout(fn, 0)
   }
@@ -83,6 +100,11 @@ module.exports = (function() {
   function catchErr(catchCb, tryCb) {
     try { tryCb() } catch(err) { catchCb(err) }
   }
+
+  function delayedPromise(fn) {
+    return new MyPromise((resolve, reject) => executeLater(() => fn(resolve, reject)))
+  }
+
 
   return MyPromise
 })()
