@@ -11,31 +11,24 @@ function MyPromise(fn) {
     toInvoke.forEach(cb => cb())
   }
 
-  function handle(newState, newResult) {
-    if(state === 'pending') {
-      state  = newState
-      result = newResult
-      invokeCallbacks()
-    }
+  function handle(settledState, settledValue) {
+    if(state !== 'pending') return
+    state  = settledState
+    result = settledValue
+    invokeCallbacks()
   }
 
   this.then = function(fn) {
     return new MyPromise((resolve, reject) => {
-        executeLater(() => {
-          callbacks.push(() => {
-            if (state === 'settled') {
-              try {
-                var nextResult = fn(result)
-                if(nextResult instanceof MyPromise)
-                  nextResult.then(val => resolve(val))
-                else
-                  resolve(nextResult)
-              } catch(err) {
-                reject(err)
-              }
-            }
-            else if (state === 'error')
-              reject(result)
+      executeLater(() => {
+        callbacks.push(() => {
+          if (state === 'settled')
+            try { var nextResult = fn(result)
+                  if(thenable(nextResult)) nextResult.then(val => resolve(val))
+                  else resolve(nextResult)
+            } catch(err) { reject(err) }
+          else if (state === 'error')
+            reject(result)
         })
         if(state !== 'pending') invokeCallbacks()
       })
@@ -46,20 +39,14 @@ function MyPromise(fn) {
     return new MyPromise((resolve, reject) => {
       executeLater(() => {
         callbacks.push(() => {
-          if (state === 'settled') {
+          if (state === 'settled')
             resolve(result)
-          }
-          else if (state === 'error') {
+          else if (state === 'error')
             try {
               var nextResult = fn(result)
-              if(nextResult instanceof MyPromise)
-                nextResult.then(val => resolve(val))
-              else
-                resolve(nextResult)
-            } catch(err) {
-              reject(err)
-            }
-          }
+              if(thenable(nextResult)) nextResult.then(val => resolve(val))
+              else resolve(nextResult)
+            } catch(err) { reject(err) }
         })
         if(state !== 'pending') invokeCallbacks()
       })
@@ -85,7 +72,7 @@ MyPromise.reject = function(reason) {
 
 MyPromise.resolve = function(value) {
   return new MyPromise((resolve, reject) => {
-    if(value && value.then instanceof Function)
+    if(thenable(value))
       value.then(resolve).catch(reject)
     else
       resolve(value)
@@ -109,4 +96,8 @@ MyPromise.all = function(promises) {
 
 function executeLater(fn) {
   setTimeout(fn, 0)
+}
+
+function thenable(value) {
+  return value && value.then instanceof Function
 }
