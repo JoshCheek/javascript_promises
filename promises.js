@@ -6,9 +6,8 @@ function MyPromise(fn) {
   var callbacks = []
 
   function invokeCallbacks() {
-    var toInvoke = callbacks
+    callbacks.forEach(cb => cb())
     callbacks = []
-    toInvoke.forEach(cb => cb())
   }
 
   function handle(settledState, settledValue) {
@@ -19,20 +18,19 @@ function MyPromise(fn) {
   }
 
   function thenHelper(fn, resolve, reject) {
-    if (state === 'settled')
-      try { var nextResult = fn(result)
-            if(thenable(nextResult)) nextResult.then(val => resolve(val))
-            else resolve(nextResult)
-      } catch(err) { reject(err) }
-    else if (state === 'error')
-      reject(result)
+    if (state === 'error')   return reject(result)
+    if (state !== 'settled') return
+    try { var nextResult = fn(result)
+          if(thenable(nextResult)) nextResult.then(resolve)
+          else resolve(nextResult)
+    } catch(err) { reject(err) }
   }
 
   function catchHelper(fn, resolve, reject) {
     if (state === 'settled') return resolve(result)
     if (state !== 'error')   return
     try { var nextResult = fn(result)
-          if(thenable(nextResult)) nextResult.then(val => resolve(val))
+          if(thenable(nextResult)) nextResult.then(resolve)
           else resolve(nextResult)
     } catch(err) { reject(err) }
   }
@@ -55,17 +53,11 @@ function MyPromise(fn) {
     })
   }
 
-  function resolve(val) {
-    executeLater(() => handle('settled', val))
-  }
-
-  function reject(val) {
-    executeLater(() => handle('error', val))
-  }
+  const resolve = val => executeLater(() => handle('settled', val))
+  const reject  = val => executeLater(() => handle('error',   val))
 
   try { fn(resolve, reject) }
   catch(err) { reject(err) }
-  finally { /* something probably goes here .done, maybe? */ }
 }
 
 MyPromise.reject = function(reason) {
@@ -73,12 +65,9 @@ MyPromise.reject = function(reason) {
 }
 
 MyPromise.resolve = function(value) {
-  return new MyPromise((resolve, reject) => {
-    if(thenable(value))
-      value.then(resolve).catch(reject)
-    else
-      resolve(value)
-  })
+  return new MyPromise((resolve, reject) =>
+    thenable(value) ? value.then(resolve).catch(reject) : resolve(value)
+  )
 }
 
 MyPromise.all = function(promises) {
@@ -89,9 +78,9 @@ MyPromise.all = function(promises) {
   const promiseAll   = new MyPromise((rv, rj) => { resolve = rv, reject = rj })
   promises.forEach((promise, index) => {
     MyPromise.resolve(promise)
-             .catch(val => reject(val))
-             .then(val  => results[index] = val)
-             .then(_    => --promisesLeft || resolve(results))
+             .catch(reject)
+             .then(val => results[index] = val)
+             .then(_   => --promisesLeft || resolve(results))
   })
   return promiseAll
 }
