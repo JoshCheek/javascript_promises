@@ -20,12 +20,16 @@ module.exports = (function() {
       catch(err) { this[REJECT](err) }
     }
 
-    then(fn) {
-      return delayedPromise((resolve, reject) => this[IF_STATE]({
+    then(onFulfilled, onRejected) {
+      const promise = delayedPromise((resolve, reject) => this[IF_STATE]({
         pending: (retry) => this[CALLBACKS].push(retry),
-        settled: ()      => this[RESOLVE_OR_REJECT](fn, resolve, reject),
+        settled: ()      => this[RESOLVE_OR_REJECT](onFulfilled, resolve, reject),
         error:   ()      => reject(this[RESULT]),
       }))
+      if(onRejected)
+        return promise.catch(onRejected)
+      else
+        return promise
     }
 
     catch(fn) {

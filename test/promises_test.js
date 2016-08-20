@@ -241,7 +241,17 @@ describe('MyPromise', function() {
           .then(testFinished)
   })
 
-  // TODO: Apparently you can pass 2 args to .then (maybe also to .catch?)
+  specify('.then can take a second error function directly', function(testFinished) {
+    var seen = []
+    new MyPromise((result, reject) => result('a'))
+        .then((val) => seen.push([1, val]),
+              (err) => seen.push([2, err]))
+    new MyPromise((result, reject) => reject('b'))
+        .then((val) => seen.push([3, val]),
+              (err) => seen.push([4, err]))
+        .then(_ => assert.deepEqual(seen, [[1, 'a'], [4, 'b']]))
+        .then(testFinished)
+  })
 
   describe('.length', function() {
     it('is always 1 (number of constructor arguments)', function() {
