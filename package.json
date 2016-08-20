@@ -1,0 +1,23 @@
+{
+  "name": "uhm-fuckoff",
+  "version": "0.0.1",
+  "description": "fuckoff",
+  "main": "fuckoff.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "Josh Cheek",
+  "license": "WTFPL",
+  "bugs": {
+    "url": "https://example.com"
+  },
+  "homepage": "https://example.com",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5"
+  }
+}
