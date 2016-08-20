@@ -83,6 +83,16 @@ MyPromise.reject = function(reason) {
   return new MyPromise((resolve, reject) => reject(reason))
 }
 
+MyPromise.resolve = function(value) {
+  if(value && value.then instanceof Function) {
+    return new MyPromise((resolve, reject) => {
+      value.then(resolve)
+    })
+  } else {
+    return new MyPromise((resolve, reject) => resolve(value))
+  }
+}
+
 function executeLater(fn) {
   setTimeout(fn, 0)
 }

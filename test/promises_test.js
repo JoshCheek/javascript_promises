@@ -265,6 +265,21 @@ describe('MyPromise', function() {
   })
 
   describe('.resolve', function() {
+    it('returns a promise that is resolved with the given value', function(testFinished) {
+      var p1 = MyPromise.resolve('abc')
+      var p2 = MyPromise.resolve(null)
+      var p3 = MyPromise.resolve(undefined)
+      p1.then(val => assert.equal(val, 'abc'))
+      p2.then(val => assert.equal(val, null))
+      p3.then(val => assert.equal(val, undefined))
+        .then(testFinished)
+    })
+
+    it('if the value is a thenable, the returned promise will adopt its eventual state', function(testFinished) {
+      MyPromise.resolve({then: (cb) => cb('hello')})
+               .then(val => assert.equal(val, 'hello'))
+               .then(testFinished)
+    })
   })
 
   describe.skip('.all', function() {
