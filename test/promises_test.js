@@ -315,7 +315,11 @@ describe('MyPromise', function() {
 
     it('abandons waiting upon the first rejection', function(testFinished) {
       // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
-      var p1 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "one"  ))
+      var p1finished = false
+      var p1 = new MyPromise((resolve, reject) => setTimeout(function() {
+        p1finished = true
+        resolve("one")
+      }, 1000))
       var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 25, "two"  ))
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 20, "three"))
       var p4 = new MyPromise((resolve, reject) => reject("nahhh"))
@@ -325,6 +329,7 @@ describe('MyPromise', function() {
       MyPromise.all([p1, p2, p3, p4, p5])
                .then(val  => seen.push(val))
                .catch(err => seen.push(err))
+               .then(_    => assert.equal(p1finished, false))
                .then(_    => assert.deepEqual(seen, ['nahhh']))
                .then(testFinished)
     })
