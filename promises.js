@@ -18,19 +18,30 @@ function MyPromise(fn) {
     invokeCallbacks()
   }
 
+  function thenHelper(fn, resolve, reject) {
+    if (state === 'settled')
+      try { var nextResult = fn(result)
+            if(thenable(nextResult)) nextResult.then(val => resolve(val))
+            else resolve(nextResult)
+      } catch(err) { reject(err) }
+    else if (state === 'error')
+      reject(result)
+  }
+
+  function catchHelper(fn, resolve, reject) {
+    if (state === 'settled') return resolve(result)
+    if (state !== 'error')   return
+    try { var nextResult = fn(result)
+          if(thenable(nextResult)) nextResult.then(val => resolve(val))
+          else resolve(nextResult)
+    } catch(err) { reject(err) }
+  }
+
   this.then = function(fn) {
     return new MyPromise((resolve, reject) => {
       executeLater(() => {
-        callbacks.push(() => {
-          if (state === 'settled')
-            try { var nextResult = fn(result)
-                  if(thenable(nextResult)) nextResult.then(val => resolve(val))
-                  else resolve(nextResult)
-            } catch(err) { reject(err) }
-          else if (state === 'error')
-            reject(result)
-        })
-        if(state !== 'pending') invokeCallbacks()
+        var invoke = () => thenHelper(fn, resolve, reject)
+        state === 'pending' ? callbacks.push(invoke) : invoke()
       })
     })
   }
@@ -38,17 +49,8 @@ function MyPromise(fn) {
   this.catch = function(fn) {
     return new MyPromise((resolve, reject) => {
       executeLater(() => {
-        callbacks.push(() => {
-          if (state === 'settled')
-            resolve(result)
-          else if (state === 'error')
-            try {
-              var nextResult = fn(result)
-              if(thenable(nextResult)) nextResult.then(val => resolve(val))
-              else resolve(nextResult)
-            } catch(err) { reject(err) }
-        })
-        if(state !== 'pending') invokeCallbacks()
+        var invoke = () => catchHelper(fn, resolve, reject)
+        state === 'pending' ? callbacks.push(invoke) : invoke()
       })
     })
   }
