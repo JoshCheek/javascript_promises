@@ -20,8 +20,15 @@ function MyPromise(fn) {
   this.then = function(fn) {
     return new MyPromise((resolve, reject) => {
       callbacks.push(() => {
-        if      ( state === 'settled' ) resolve(fn(result))
-        else if ( state === 'error'   ) reject(result)
+        if (state === 'settled') {
+          var nextResult = fn(result)
+          if(nextResult instanceof MyPromise)
+            nextResult.then(val => resolve(val))
+          else
+            resolve(nextResult)
+        }
+        else if (state === 'error')
+          reject(result)
       })
       if(state !== 'pending') invokeCallbacks()
     })
@@ -42,7 +49,7 @@ function MyPromise(fn) {
   })
 
   const reject = (val) => { // invoke only once?
-    handle('error', val) // execute later?
+    executeLater(() => handle('error', val))
   }
 
   try { fn(resolve, reject) }

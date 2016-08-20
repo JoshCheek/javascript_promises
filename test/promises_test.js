@@ -99,7 +99,7 @@ describe('MyPromise', function() {
     })
   })
 
-  specify.only('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
+  specify('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
     var seen = []
     var promise = new MyPromise((result, reject) => { reject("errr") })
     promise.catch(err => { seen.push(err); return 1 })
