@@ -68,10 +68,15 @@ module.exports = (function() {
     }
   }
 
-  MyPromise.reject  = reason => new MyPromise((_, reject) => reject(reason))
-  MyPromise.resolve = value  => new MyPromise((resolve, reject) =>
-    thenable(value) ? value.then(resolve).catch(reject) : resolve(value)
-  )
+  MyPromise.reject  = function(reason) {
+    return new MyPromise((_, reject) => reject(reason))
+  }
+
+  MyPromise.resolve = function(value) {
+    return new MyPromise((resolve, reject) =>
+      thenable(value) ? value.then(resolve).catch(reject) : resolve(value)
+    )
+  }
 
   MyPromise.all = function(promises) {
     var   resolve      = undefined
@@ -101,7 +106,6 @@ module.exports = (function() {
   function delayedPromise(fn) {
     return new MyPromise((resolve, reject) => executeLater(() => fn(resolve, reject)))
   }
-
 
   return MyPromise
 })()
