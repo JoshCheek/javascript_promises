@@ -16,7 +16,12 @@ describe('MyPromise', function() {
     assert.equal(reject_cb.constructor,  Function)
   })
 
-  it.skip('invokes waiting functions when its resolution function has been called', function() {
+  it('invokes waiting functions when its resolution function has been called', function(testFinished) {
+    var resolvedTo = "nothing yet"
+    new MyPromise((resolve, reject) => resolve("the value"))
+          .then(val => resolvedTo = val)
+          .then(val => assert.equal(resolvedTo, "the value"))
+          .then(val => testFinished())
   })
 
   it.skip('has a then method that will be used to add waiting functions', function() {
