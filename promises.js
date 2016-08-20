@@ -5,55 +5,48 @@ function MyPromise(fn) {
   var result    = undefined
   var callbacks = []
 
+  function invokeCallbacks() {
+    callbacks.forEach(cb => cb())
+    callbacks = []
+  }
+
+  function handle(newState, newResult) {
+    state  = newState
+    result = newResult
+    invokeCallbacks()
+  }
+
   this.then = function(fn) {
     return new Promise((resolve, reject) => {
-      var invoke = () => {
-        if (state === 'settled') resolve(fn(result))
-        else if (state === 'error') reject(result)
-      }
-      if(state !== 'pending') invoke()
-      else callbacks.push(invoke)
+      callbacks.push(() => {
+        if      ( state === 'settled' ) resolve(fn(result))
+        else if ( state === 'error'   ) reject(result)
+      })
+      if(state !== 'pending') invokeCallbacks()
     })
   }
 
   this.catch = function(fn) {
     return new Promise((resolve, reject) => {
-      var invoke = () => {
-        if (state === 'error') resolve(fn(result))
-        else if (state === 'settled') resolve(result)
-      }
-      if(state !== 'pending') invoke()
-      else callbacks.push(invoke)
+      callbacks.push(() => {
+        if      ( state === 'settled' ) resolve(result)
+        else if ( state === 'error'   ) resolve(fn(result))
+      })
+      if(state !== 'pending') invokeCallbacks()
     })
-  }
-
-  function invokeCallbacks() {
-    callbacks.forEach(cb => cb())
-    callbacks = "You should not have gotten this far"
   }
 
   const resolve = invokeOnlyOnce(val => {
-    executeLater(() => {
-      state  = 'settled'
-      result = val
-      invokeCallbacks()
-    })
+    executeLater(() => handle('settled', val))
   })
 
   const reject = (val) => { // invoke only once?
-    // execute later?
-    state  = 'error'
-    result = val
-    invokeCallbacks()
+    handle('error', val) // execute later?
   }
 
-  try {
-    fn(resolve, reject)
-  } catch(err) {
-    reject(err)
-  } finally {
-    // something probably goes here .done, maybe?
-  }
+  try { fn(resolve, reject) }
+  catch(err) { reject(err) }
+  finally { /* something probably goes here .done, maybe? */ }
 }
 
 const executeLater = function(fn) { setTimeout(fn, 0) }
