@@ -127,6 +127,16 @@ describe('MyPromise', function() {
           .then(testFinished)
   })
 
-  // TODO: what if we throw null / undefined?
+  specify('when we throw null/undefined, it behaves the same as when we throw any other value', function(testFinished) {
+    var seen = []
+    new MyPromise((result, reject) => reject(null))
+          .catch(val => seen.push(val))
+    new MyPromise((result, reject) => reject(undefined))
+          .catch(val => seen.push(val))
+          .then(_    => assert.deepEqual(seen, [null, undefined]))
+          .then(testFinished)
+  })
+
   // TODO: define a .then from within a .then
+  // TODO: when a .then / .catch block raises ane error
 })
