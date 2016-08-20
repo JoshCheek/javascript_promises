@@ -292,9 +292,6 @@ describe('MyPromise', function() {
     })
   })
 
-  // TODO: it should still work just fine if you modify the array in the middle of it
-  // TODO: it should work regardless of the order of completion
-  // TODO: what happens if you give it a non-array? (eg arguments or string)
   describe('.all', function() {
     it('waits for all fulfillments', function(testFinished) {
       // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
@@ -306,6 +303,16 @@ describe('MyPromise', function() {
                .then(testFinished)
     })
 
+    it('organizes the results by their order in the array, not order of completion', function(testFinished) {
+      var p1 = new MyPromise((resolve, reject) => setTimeout(resolve,  0, "one"  ))
+      var p2 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "two"  ))
+      var p3 = new MyPromise((resolve, reject) => setTimeout(resolve,  5, "three"))
+
+      MyPromise.all([p1, p2, p3])
+               .then(values => assert.deepEqual(values, ["one", "two", "three"]))
+               .then(testFinished)
+    })
+
     it('abandons waiting upon the first rejection', function(testFinished) {
       // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
       var p1 = new MyPromise((resolve, reject) => setTimeout(resolve, 10, "one"  ))
@@ -313,7 +320,6 @@ describe('MyPromise', function() {
       var p3 = new MyPromise((resolve, reject) => setTimeout(resolve, 20, "three"))
       var p4 = new MyPromise((resolve, reject) => reject("nahhh"))
       var p5 = new MyPromise((resolve, reject) => setTimeout(resolve, 15, "four" ))
-      p4.hello = "world"
 
       var seen = []
       MyPromise.all([p1, p2, p3, p4, p5])
@@ -329,5 +335,8 @@ describe('MyPromise', function() {
                .then(testFinished)
     })
 
+    it.skip('explodes into the catch block when given no arguments (for whatever fkn reason -.^)', function(testFinished) {
+      Promise.all().catch(err => testFinished())
+    })
   })
 })
