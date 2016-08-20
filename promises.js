@@ -1,9 +1,11 @@
 module.exports = MyPromise
 
 function MyPromise(fn) {
-  var state     = 'pending'
   var result    = undefined
   var callbacks = []
+  var state     = 'pending'
+  const resolve = (val) => executeLater(() => handle('settled', val))
+  const reject  = (val) => executeLater(() => handle('error',   val))
 
   function invokeCallbacks() {
     callbacks.forEach(cb => cb())
@@ -16,18 +18,18 @@ function MyPromise(fn) {
   }
 
   function handle(settledState, settledValue) {
-    if(state !== 'pending') return
-    state  = settledState
-    result = settledValue
-    invokeCallbacks()
+    ifState({pending: () => {
+      state  = settledState
+      result = settledValue
+      invokeCallbacks()
+    }})
   }
 
   function resolveOrReject(fn, resolve, reject) {
-    try {
+    catchErr(reject, () => {
       var nextResult = fn(result)
-      if(thenable(nextResult)) nextResult.then(resolve)
-      else resolve(nextResult)
-    } catch(err) { reject(err) }
+      thenable(nextResult) ? nextResult.then(resolve) : resolve(nextResult)
+    })
   }
 
   const delayedPromise = (fn) =>
@@ -45,22 +47,13 @@ function MyPromise(fn) {
     error:   ()      => resolveOrReject(fn, resolve, reject),
   }))
 
-  const resolve = val => executeLater(() => handle('settled', val))
-  const reject  = val => executeLater(() => handle('error',   val))
-
-  try { fn(resolve, reject) }
-  catch(err) { reject(err) }
+  catchErr(reject, ()=>fn(resolve, reject))
 }
 
-MyPromise.reject = function(reason) {
-  return new MyPromise((_, reject) => reject(reason))
-}
-
-MyPromise.resolve = function(value) {
-  return new MyPromise((resolve, reject) =>
-    thenable(value) ? value.then(resolve).catch(reject) : resolve(value)
-  )
-}
+MyPromise.reject  = reason => new MyPromise((_, reject) => reject(reason))
+MyPromise.resolve = value  => new MyPromise((resolve, reject) =>
+  thenable(value) ? value.then(resolve).catch(reject) : resolve(value)
+)
 
 MyPromise.all = function(promises) {
   var   resolve      = undefined
@@ -83,4 +76,8 @@ function executeLater(fn) {
 
 function thenable(value) {
   return value && value.then instanceof Function
+}
+
+function catchErr(catchCb, tryCb) {
+  try { tryCb() } catch(err) { catchCb(err) }
 }
