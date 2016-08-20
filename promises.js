@@ -2,15 +2,15 @@ module.exports = MyPromise
 
 function MyPromise(fn) {
   this._thenClauses = [];
-  var resolved = false;
-  const resolve = (val) => {
-    if(resolved) return
-    resolved = true
-    this._resolvedTo = val
-    this._thenClauses.forEach(fn => fn(val))
-  }
-  const reject  = (idk) => console.log("Uhhhh, this is a mistake >.<")
-  fn(resolve, reject)
+  const reject = (idk) => console.log("Uhhhh, this is a mistake >.<")
+  fn(makeResolver(this), reject)
+}
+
+function makeResolver(promise) {
+  return invokeOnlyOnce(val => {
+    promise._resolvedTo = val
+    promise._thenClauses.forEach(fn => fn(val))
+  })
 }
 
 MyPromise.prototype.then = function(fn) {
@@ -24,10 +24,19 @@ MyPromise.prototype.then = function(fn) {
             resolve(result)
         }, 0)
     }
-    if(this._resolvedTo !== undefined)
+    if(this._resolvedTo !== undefined) // TODO: should we be able to resolve to undefined?
       invoke(this._resolvedTo)
     else
       this._thenClauses.push(invoke)
   })
   return promise
+}
+
+function invokeOnlyOnce(fn) {
+  var invoked = false;
+  return function() {
+    if(invoked) return
+    invoked = true
+    return fn.apply(this, Array.prototype.slice.call(arguments))
+  }
 }

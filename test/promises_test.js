@@ -80,5 +80,7 @@ describe('MyPromise', function() {
            .then(testFinished)
     })
   })
+
   // TODO: Figure out wtf happens with reject
+  // TODO: throw exceptions (before and after .then cinvocations)
 })
