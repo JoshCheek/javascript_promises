@@ -10,6 +10,11 @@ function MyPromise(fn) {
     callbacks = []
   }
 
+  function ifState(callbacks) {
+    const retry = () => ifState(callbacks)
+    callbacks[state] && callbacks[state](retry)
+  }
+
   function handle(settledState, settledValue) {
     if(state !== 'pending') return
     state  = settledState
@@ -18,41 +23,27 @@ function MyPromise(fn) {
   }
 
   function resolveOrReject(fn, resolve, reject) {
-    try { var nextResult = fn(result)
-          if(thenable(nextResult)) nextResult.then(resolve)
-          else resolve(nextResult)
+    try {
+      var nextResult = fn(result)
+      if(thenable(nextResult)) nextResult.then(resolve)
+      else resolve(nextResult)
     } catch(err) { reject(err) }
   }
 
-  function thenHelper(fn, resolve, reject) {
-    if (state === 'error')   return reject(result)
-    if (state !== 'settled') return
-    resolveOrReject(fn, resolve, reject)
-  }
+  const delayedPromise = (fn) =>
+    new MyPromise((resolve, reject) => executeLater(() => fn(resolve, reject)))
 
-  function catchHelper(fn, resolve, reject) {
-    if (state === 'settled') return resolve(result)
-    if (state !== 'error')   return
-    resolveOrReject(fn, resolve, reject)
-  }
+  this.then = fn => delayedPromise((resolve, reject) => ifState({
+    pending: (retry) => callbacks.push(retry),
+    settled: ()      => resolveOrReject(fn, resolve, reject),
+    error:   ()      => reject(result),
+  }))
 
-  this.then = function(fn) {
-    return new MyPromise((resolve, reject) => {
-      executeLater(() => {
-        var invoke = () => thenHelper(fn, resolve, reject)
-        state === 'pending' ? callbacks.push(invoke) : invoke()
-      })
-    })
-  }
-
-  this.catch = function(fn) {
-    return new MyPromise((resolve, reject) => {
-      executeLater(() => {
-        var invoke = () => catchHelper(fn, resolve, reject)
-        state === 'pending' ? callbacks.push(invoke) : invoke()
-      })
-    })
-  }
+  this.catch = fn => delayedPromise((resolve, reject) => ifState({
+    pending: (retry) => callbacks.push(retry),
+    settled: ()      => resolve(result),
+    error:   ()      => resolveOrReject(fn, resolve, reject),
+  }))
 
   const resolve = val => executeLater(() => handle('settled', val))
   const reject  = val => executeLater(() => handle('error',   val))
