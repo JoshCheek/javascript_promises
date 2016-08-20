@@ -82,7 +82,7 @@ describe('MyPromise', function() {
   })
 
   describe('when there is an exception in the constructor', function() {
-    it('passes the result to each dependent fn chain, which can rescue the result', function(testFinished) {
+    it('passes the result to each dependent fn chain, which can catch the result', function(testFinished) {
       var seen = []
       var promise = new MyPromise((result, reject) => { throw("errr") })
       promise.catch(err => { seen.push(err); return 1 })
@@ -99,7 +99,7 @@ describe('MyPromise', function() {
     })
   })
 
-  specify('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
+  specify('invoking reject in the constructor puts it into an errored state, similar to raising an error', function(testFinished) {
     var seen = []
     var promise = new MyPromise((result, reject) => { reject("errr") })
     promise.catch(err => { seen.push(err); return 1 })
@@ -113,6 +113,16 @@ describe('MyPromise', function() {
            .then(val  => { seen.push(val); return 9 })
            .then(_    => assert.deepEqual(seen, ['errr', 'errr', 1, 'errr', 7, 2, 5, 8]))
            .then(testFinished)
+  })
+
+  specify('invoking reject does not halt execution', function(testFinished) {
+    var seen = []
+    new MyPromise((result, reject) => {
+      seen.push(1)
+      reject('uhh')
+      seen.push(2)
+    }).catch(_ => assert.deepEqual(seen, [1, 2]))
+      .then(testFinished)
   })
 
   specify('wen the result is null/undefined, it behaves the same as if it were a value', function(testFinished) {
@@ -155,6 +165,8 @@ describe('MyPromise', function() {
            ]))
            .then(testFinished)
   })
+
   // TODO: when a .then / .catch block raises ane error
-  // TODO: does invoking reject from within the constructor fn cease invocation? ie will the next line run?
+  // TODO: invoking reject multiple times
+  // TODO: a promise passed to catch
 })
