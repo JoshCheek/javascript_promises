@@ -6,13 +6,6 @@ function MyPromise(fn) {
   fn(makeResolver(this), reject)
 }
 
-function makeResolver(promise) {
-  return invokeOnlyOnce(val => {
-    promise._resolvedTo = val
-    promise._thenClauses.forEach(fn => fn(val))
-  })
-}
-
 MyPromise.prototype.then = function(fn) {
   return new MyPromise((resolve, reject) => {
     var invoke = invokeThenClause(fn, resolve, reject)
@@ -20,6 +13,13 @@ MyPromise.prototype.then = function(fn) {
       invoke(this._resolvedTo)
     else
       this._thenClauses.push(invoke)
+  })
+}
+
+function makeResolver(promise) {
+  return invokeOnlyOnce(val => {
+    promise._resolvedTo = val
+    promise._thenClauses.forEach(fn => fn(val))
   })
 }
 
