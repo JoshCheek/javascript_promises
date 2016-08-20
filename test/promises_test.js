@@ -2,6 +2,7 @@
 
 const assert       = require('chai').assert;
 const MyPromise    = require('../promises.js')
+// const MyPromise    = Promise
 const executeLater = function(fn) { setTimeout(fn, 0) }
 
 describe('MyPromise', function() {
@@ -45,6 +46,22 @@ describe('MyPromise', function() {
            .then(_ => testFinished())
   })
 
+  it('works when the then functions are defined before resolve is called', function(testFinished) {
+    var order = []
+    var promise = new MyPromise((resolve, reject) => {
+      order.push(1)
+      executeLater(() => {
+        order.push(3)
+        resolve(5)
+        order.push(4)
+      })
+    })
+    order.push(2)
+    promise.then(val => order.push(val))
+           .then(_   => assert.deepEqual(order, [1, 2, 3, 4, 5]))
+           .then(testFinished)
+  })
+
   describe('when the result is a promise', function() {
     it('passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
       new MyPromise((resolve, reject) => resolve('first'))
@@ -53,7 +70,6 @@ describe('MyPromise', function() {
            .then(testFinished)
     })
   })
-  // TODO: put a timeout in the initial function
   // TODO: call resolve 2x
   // TODO: Figure out wtf happens with reject
 })
