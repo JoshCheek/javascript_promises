@@ -37,11 +37,11 @@ module.exports = (function() {
     },
 
     [RESOLVE]: function(val) {
-      executeLater(() => this[HANDLE]('settled', val))
+      invokeLater(() => this[HANDLE]('settled', val))
     },
 
     [REJECT]:  function(val) {
-      executeLater(() => this[HANDLE]('error',   val))
+      invokeLater(() => this[HANDLE]('error',   val))
     },
 
     [RESOLVE_OR_REJECT]: function(fn, resolve, reject) {
@@ -95,7 +95,7 @@ module.exports = (function() {
 
   // helpers
 
-  function executeLater(fn) {
+  function invokeLater(fn) {
     setTimeout(fn, 0)
   }
 
@@ -104,7 +104,7 @@ module.exports = (function() {
   }
 
   function delayedPromise(fn) {
-    return new MyPromise((resolve, reject) => executeLater(() => fn(resolve, reject)))
+    return new MyPromise((resolve, reject) => invokeLater(() => fn(resolve, reject)))
   }
 
   return MyPromise
