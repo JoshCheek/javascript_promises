@@ -199,5 +199,34 @@ describe('MyPromise', function() {
     })
   })
 
-  // TODO: when both reject and result are called (in whichever order)
+  describe('when both reject and result are called (in whichever order)', function() {
+    specify('when the result is invoked first, it ignores the reject', function(testFinished) {
+      var seen = []
+      var promise = new MyPromise((result, reject) => {
+        result('a')
+        reject('b')
+      })
+      promise.then(val  => seen.push(val))
+             .catch(val => seen.push(val))
+      promise.catch(val => seen.push(val))
+             .then(val  => seen.push(val))
+             .then(_ => assert.deepEqual(seen, ['a', 'a']))
+             .then(testFinished)
+
+    })
+
+    specify('when the reject is invoked first, it ignores the result', function(testFinished) {
+      var seen = []
+      var promise = new MyPromise((result, reject) => {
+        reject('b')
+        result('a')
+      })
+      promise.then(val  => seen.push(val))
+             .catch(val => seen.push(val))
+      promise.catch(val => seen.push(val))
+             .then(_ => assert.deepEqual(seen, ['b', 'b']))
+             .then(testFinished)
+    })
+  })
+  // TODO: then/catch/then, no exceptions
 })

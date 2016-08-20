@@ -12,9 +12,11 @@ function MyPromise(fn) {
   }
 
   function handle(newState, newResult) {
-    state  = newState
-    result = newResult
-    invokeCallbacks()
+    if(state === 'pending') {
+      state  = newState
+      result = newResult
+      invokeCallbacks()
+    }
   }
 
   this.then = function(fn) {
@@ -64,13 +66,13 @@ function MyPromise(fn) {
     })
   }
 
-  const resolve = invokeOnlyOnce(val => {
+  function resolve(val) {
     executeLater(() => handle('settled', val))
-  })
+  }
 
-  const reject = invokeOnlyOnce(val => {
+  function reject(val) {
     executeLater(() => handle('error', val))
-  })
+  }
 
   try { fn(resolve, reject) }
   catch(err) { reject(err) }
@@ -79,13 +81,4 @@ function MyPromise(fn) {
 
 function executeLater(fn) {
   setTimeout(fn, 0)
-}
-
-function invokeOnlyOnce(fn) {
-  var invoked = false;
-  return function() {
-    if(invoked) return
-    invoked = true
-    return fn.apply(this, Array.prototype.slice.call(arguments))
-  }
 }
