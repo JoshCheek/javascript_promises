@@ -16,15 +16,14 @@ describe('MyPromise', function() {
     assert.equal(reject_cb.constructor,  Function)
   })
 
-  it('invokes waiting functions when its resolution function has been called', function(testFinished) {
-    var resolvedTo = "nothing yet"
-    new MyPromise((resolve, reject) => resolve("the value"))
-          .then(val => resolvedTo = val)
-          .then(val => assert.equal(resolvedTo, "the value"))
-          .then(val => testFinished())
-  })
-
-  it.skip('has a then method that will be used to add waiting functions', function() {
+  it('queues up waiting functions in its .then method, and invokes invokes them when its resolution function has been called', function(testFinished) {
+    var seen = []
+    new MyPromise((resolve, reject) => resolve("a"))
+          .then(a => seen.push(a) && "b")
+          .then(b => seen.push(b) && "c")
+          .then(c => seen.push(c))
+          .then(_ => assert.deepEqual(seen, ["a", "b", "c"]))
+          .then(_ => testFinished())
   })
 
   it.skip('passes the result of one waiting function as the value for the next waiting function', function() {
