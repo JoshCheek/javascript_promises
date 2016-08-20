@@ -2,7 +2,10 @@ module.exports = MyPromise
 
 function MyPromise(fn) {
   this._thenClauses = [];
+  var resolved = false;
   const resolve = (val) => {
+    if(resolved) return
+    resolved = true
     this._resolvedTo = val
     this._thenClauses.forEach(fn => fn(val))
   }

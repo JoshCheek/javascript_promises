@@ -62,6 +62,16 @@ describe('MyPromise', function() {
            .then(testFinished)
   })
 
+  it('ignores resolutions after the first one', function(testFinished) {
+    var seen    = []
+    new MyPromise((resolve, reject) => {
+      resolve('a')
+      resolve('b')
+    }).then(a => seen.push(a))
+      .then(_ => assert.deepEqual(seen, ['a']))
+      .then(_ => testFinished())
+  })
+
   describe('when the result is a promise', function() {
     it('passes the promise\'s result as the next value, not the promise itself', function(testFinished) {
       new MyPromise((resolve, reject) => resolve('first'))
@@ -70,6 +80,5 @@ describe('MyPromise', function() {
            .then(testFinished)
     })
   })
-  // TODO: call resolve 2x
   // TODO: Figure out wtf happens with reject
 })
