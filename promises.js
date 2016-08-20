@@ -6,8 +6,9 @@ function MyPromise(fn) {
   var callbacks = []
 
   function invokeCallbacks() {
-    callbacks.forEach(cb => cb())
+    var toInvoke = callbacks
     callbacks = []
+    toInvoke.forEach(cb => cb())
   }
 
   function handle(newState, newResult) {
@@ -17,7 +18,7 @@ function MyPromise(fn) {
   }
 
   this.then = function(fn) {
-    return new Promise((resolve, reject) => {
+    return new MyPromise((resolve, reject) => {
       callbacks.push(() => {
         if      ( state === 'settled' ) resolve(fn(result))
         else if ( state === 'error'   ) reject(result)
@@ -27,7 +28,7 @@ function MyPromise(fn) {
   }
 
   this.catch = function(fn) {
-    return new Promise((resolve, reject) => {
+    return new MyPromise((resolve, reject) => {
       callbacks.push(() => {
         if      ( state === 'settled' ) resolve(result)
         else if ( state === 'error'   ) resolve(fn(result))

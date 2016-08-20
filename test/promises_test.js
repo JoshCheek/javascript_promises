@@ -99,7 +99,7 @@ describe('MyPromise', function() {
     })
   })
 
-  specify('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
+  specify.only('invoking reject in the constructor is the same as throwing an error', function(testFinished) {
     var seen = []
     var promise = new MyPromise((result, reject) => { reject("errr") })
     promise.catch(err => { seen.push(err); return 1 })
@@ -137,6 +137,26 @@ describe('MyPromise', function() {
           .then(testFinished)
   })
 
-  // TODO: define a .then from within a .then
+  specify.skip('.then, declared from within a .then will be appended to the event queue', function(testFinished) {
+    var seen = []
+    var promise = new MyPromise((result, reject) => result('a'))
+    console.log(promise)
+    promise.then(val => {
+             seen.push([1, val])
+             promise.then(val => {
+               seen.push([3, val])
+               promise.then(val => seen.push([5, val]))
+             })
+             seen.push([2, val])
+             return 'b'
+           })
+           .then(val => seen.push([4, val]))
+           .then(_   => console.log(seen))
+           .then(_   => assert.deepEqual(seen, [
+             [1, 'a'], [2, 'a'], [3, 'a'], [4, 'b'], [5, 'a']
+           ]))
+           .then(testFinished)
+  })
   // TODO: when a .then / .catch block raises ane error
+  // TODO: does invoking reject from within the constructor fn cease invocation? ie will the next line run?
 })
