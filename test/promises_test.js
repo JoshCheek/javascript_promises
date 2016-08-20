@@ -228,5 +228,16 @@ describe('MyPromise', function() {
              .then(testFinished)
     })
   })
-  // TODO: then/catch/then, no exceptions
+
+  specify('ignores .catch callbacks, when there is no error', function(testFinished) {
+    var seen = []
+    new MyPromise((result, reject) => result('a'))
+          .then(val  => seen.push([1, val]) && 'b')
+          .catch(val => seen.push([2, val]) && 'c')
+          .then(val  => seen.push([3, val]))
+          .then(_    => assert.deepEqual(seen, [
+            [1, 'a'], [3, 'b']
+          ]))
+          .then(testFinished)
+  })
 })
